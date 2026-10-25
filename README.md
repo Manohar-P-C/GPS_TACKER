@@ -1,4 +1,4 @@
-# GPS Tracker 🚌
+# GPS Tracker 
 
 A real-time GPS tracking prototype built using ESP32, a NEO-6M GPS module, Python, and Leaflet. The system collects GPS coordinates from the ESP32, transmits them over Wi-Fi to a Python server, and displays the reported location on an interactive map.
 
@@ -53,11 +53,8 @@ GPS Module → ESP32 → Wi-Fi Hotspot → Python HTTP Server → Leaflet Map
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_REPOSITORY_URL
-cd GPS_TRACKER
+git clone https://github.com/Manohar-P-C/GPS_TACKER
 ```
-
-Replace `YOUR_REPOSITORY_URL` with your GitHub repository URL.
 
 ### 2. Configure the ESP32
 
