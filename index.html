@@ -1,15 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>College Bus Tracker</title>
 
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         * {
@@ -154,10 +151,39 @@
 
         const map = L.map("map").setView(initialPosition, 16);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap contributors"
-        }).addTo(map);
+
+        const streetLayer = L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                maxZoom: 19,
+                attribution: "&copy; OpenStreetMap contributors"
+            }
+        );
+
+        const satelliteLayer = L.tileLayer(
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            {
+                maxZoom: 19,
+                attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+            }
+        );
+
+        // Show the street map by default
+        streetLayer.addTo(map);
+
+        // Add the map-type switcher
+        L.control.layers(
+            {
+                "Street Map": streetLayer,
+                "Satellite View": satelliteLayer
+            },
+            null,
+            {
+                position: "topright",
+                collapsed: false
+            }
+        ).addTo(map);
+
 
         const busIcon = L.divIcon({
             className: "",
@@ -256,4 +282,5 @@
         setInterval(updateLocation, 2000);
     </script>
 </body>
+
 </html>
