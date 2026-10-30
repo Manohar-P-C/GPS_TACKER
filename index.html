@@ -363,81 +363,179 @@
             font-size: 13px;
         }
 
-        /* Mobile layout */
-
+        /* Mobile layout: compact journal-style presentation only */
         @media (max-width: 650px) {
-
             .page {
-                padding: 15px 13px 20px;
+                padding: 11px 10px 16px;
             }
 
             header {
+                flex-direction: column;
                 align-items: flex-start;
-                flex-wrap: wrap;
-                margin-bottom: 16px;
-                padding-bottom: 14px;
+                gap: 7px;
+                margin-bottom: 12px;
+                padding: 2px 2px 10px;
             }
 
             .brand {
-                gap: 9px;
+                gap: 8px;
             }
 
             .brand-icon {
-                width: 40px;
-                height: 40px;
+                width: 34px;
+                height: 34px;
             }
 
             h1 {
-                font-size: 29px;
+                font-size: clamp(23px, 6.5vw, 27px);
+                line-height: 1.05;
+            }
+
+            .brand-name::after {
+                bottom: -3px;
+                height: 3px;
             }
 
             .subtitle {
-                font-size: 15px;
                 margin-top: 5px;
+                font-size: 14px;
             }
 
             .status {
-                width: 100%;
-                justify-content: center;
-                padding: 8px 12px;
-                font-size: 16px;
+                width: auto;
+                max-width: 100%;
+                justify-content: flex-start;
+                gap: 7px;
+                padding: 5px 12px;
+                border-radius: 16px 13px 15px 12px;
+                font-size: 14px;
+                transform: rotate(-0.25deg);
             }
 
+            .status-dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            /* Three compact cards keep all GPS data visible above the map. */
             .info-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-                margin-bottom: 17px;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 7px;
+                margin-bottom: 12px;
             }
 
             .info-card {
-                min-height: 76px;
-                padding: 10px 15px;
+                min-width: 0;
+                min-height: 91px;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                gap: 5px;
+                padding: 8px 7px;
+                border-radius: 11px 13px 10px 12px;
+                transform: none !important;
             }
 
             .card-icon {
-                width: 42px;
-                height: 42px;
+                width: 27px;
+                height: 27px;
+            }
+
+            .card-icon svg {
+                width: 17px;
+                height: 17px;
             }
 
             .label {
-                font-size: 15px;
+                margin-bottom: 0;
+                font-size: 12px;
+                line-height: 1.15;
             }
 
             .value {
-                font-size: 17px;
+                font-size: clamp(12px, 3.5vw, 14px);
+                line-height: 1.2;
+                overflow-wrap: anywhere;
             }
 
             .map-paper {
-                padding: 7px;
+                padding: 6px;
+                border-radius: 12px 15px 12px 14px;
+            }
+
+            .map-paper::before,
+            .map-paper::after {
+                width: 43px;
+                height: 14px;
+            }
+
+            .map-paper::before {
+                top: -4px;
+                left: -10px;
+            }
+
+            .map-paper::after {
+                right: -10px;
+                bottom: -4px;
             }
 
             #map {
-                height: 58vh;
-                min-height: 340px;
+                height: 50vh;
+                min-height: 290px;
+                max-height: 460px;
+                border-radius: 7px;
+            }
+
+            .leaflet-control-layers {
+                font-size: 12px;
+                max-width: 155px;
+            }
+
+            .leaflet-control-layers label {
+                white-space: nowrap;
+            }
+
+            .leaflet-control-zoom a {
+                width: 29px !important;
+                height: 29px !important;
+                line-height: 29px !important;
+            }
+
+            .leaflet-control-attribution {
+                font-size: 9px !important;
             }
 
             .footer {
-                padding-top: 12px;
+                padding-top: 9px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 370px) {
+            .page {
+                padding-right: 8px;
+                padding-left: 8px;
+            }
+
+            .info-grid {
+                gap: 5px;
+            }
+
+            .info-card {
+                padding: 7px 5px;
+            }
+
+            .label {
+                font-size: 11px;
+            }
+
+            .value {
+                font-size: 12px;
+            }
+
+            .leaflet-control-layers {
+                max-width: 143px;
+                padding: 5px !important;
             }
         }
     </style>
