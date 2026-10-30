@@ -1,14 +1,18 @@
 
 import os
 import hmac
+import time
 from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
 GPS_API_KEY = os.environ.get("GPS_API_KEY", "")
+
+# Store the latest GPS location
 latest_location = {
     "latitude": None,
-    "longitude": None
+    "longitude": None,
+    "updated_at": None
 }
 
 
@@ -38,8 +42,10 @@ def receive_gps():
 
         latest_location["latitude"] = lat
         latest_location["longitude"] = lon
+        latest_location["updated_at"] = int(time.time())
 
         print(f"GPS received: {lat}, {lon}")
+
         return jsonify({"success": True})
 
     except (KeyError, TypeError, ValueError):
