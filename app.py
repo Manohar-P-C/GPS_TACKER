@@ -7,8 +7,8 @@ from flask import Flask, request, jsonify, send_from_directory
 app = Flask(__name__)
 
 GPS_API_KEY = os.environ.get("GPS_API_KEY", "")
+GPS_TIMEOUT = 15
 
-# Store the latest GPS location
 latest_location = {
     "latitude": None,
     "longitude": None,
@@ -54,7 +54,22 @@ def receive_gps():
 
 @app.route("/location")
 def get_location():
-    return jsonify(latest_location)
+    updated_at = latest_location["updated_at"]
+
+    if updated_at is None:
+        age_seconds = None
+        is_online = False
+    else:
+        age_seconds = max(0, int(time.time()) - updated_at)
+        is_online = age_seconds <= GPS_TIMEOUT
+
+    return jsonify({
+        "latitude": latest_location["latitude"],
+        "longitude": latest_location["longitude"],
+        "updated_at": updated_at,
+        "age_seconds": age_seconds,
+        "is_online": is_online
+    })
 
 
 @app.route("/health")

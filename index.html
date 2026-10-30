@@ -1,12 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>College Bus Tracker</title>
+    <title>GPS_TRACKER</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         * {
@@ -44,15 +46,30 @@
         .status {
             font-size: 13px;
             padding: 9px 12px;
-            background: #fff7ed;
-            color: #9a3412;
             border-radius: 6px;
             white-space: nowrap;
+            background: #f1f5f9;
+            color: #475569;
         }
 
         .status.online {
             background: #dcfce7;
             color: #166534;
+        }
+
+        .status.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.waiting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status.error {
+            background: #ffedd5;
+            color: #9a3412;
         }
 
         .info {
@@ -116,15 +133,20 @@
 </head>
 
 <body>
+
     <header>
         <div>
-            <h1>College Bus Tracker</h1>
+            <h1>GPS_TRACKER</h1>
             <div class="subtitle">Live GPS location</div>
         </div>
-        <div id="status" class="status">Connecting...</div>
+
+        <div id="status" class="status waiting">
+            Connecting...
+        </div>
     </header>
 
     <section class="info">
+
         <div>
             <div class="label">Latitude</div>
             <div id="latitude" class="value">Waiting...</div>
@@ -139,6 +161,7 @@
             <div class="label">Last update</div>
             <div id="updated" class="value">Waiting...</div>
         </div>
+
     </section>
 
     <div id="map"></div>
@@ -146,11 +169,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Initial map position: your latest reported GPS location
         const initialPosition = [13.166982, 77.557630];
 
         const map = L.map("map").setView(initialPosition, 16);
-
 
         const streetLayer = L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -168,10 +189,8 @@
             }
         );
 
-        // Show the street map by default
         streetLayer.addTo(map);
 
-        // Add the map-type switcher
         L.control.layers(
             {
                 "Street Map": streetLayer,
@@ -184,37 +203,16 @@
             }
         ).addTo(map);
 
-
-        const busIcon = L.divIcon({
-            className: "",
-            html: `
-                <div style="
-                    width: 38px;
-                    height: 38px;
-                    background: #166534;
-                    border: 3px solid white;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 8px #0005;
-                    font-size: 20px;
-                ">🚌</div>
-            `,
-            iconSize: [38, 38],
-            iconAnchor: [19, 19]
-        });
-
-        const marker = L.marker(initialPosition, {
-            icon: busIcon
-        }).addTo(map);
-
-        marker.bindPopup("College bus GPS location");
-
+        let marker = null;
         let lastCoordinates = null;
 
-        async function updateLocation() {
+        function setStatus(message, className) {
             const status = document.getElementById("status");
+            status.textContent = message;
+            status.className = "status " + className;
+        }
+
+        async function updateLocation() {
 
             try {
                 const response = await fetch(
@@ -228,16 +226,24 @@
 
                 const data = await response.json();
 
-                if (
-                    typeof data.latitude !== "number" ||
-                    typeof data.longitude !== "number"
-                ) {
-                    status.textContent = "Waiting for GPS";
-                    status.className = "status";
+                const hasCoordinates =
+                    typeof data.latitude === "number" &&
+                    typeof data.longitude === "number";
+
+                if (!hasCoordinates) {
+                    setStatus("Waiting for GPS", "waiting");
+
+                    document.getElementById("latitude").textContent = "Waiting...";
+                    document.getElementById("longitude").textContent = "Waiting...";
+                    document.getElementById("updated").textContent = "Waiting...";
+
                     return;
                 }
 
-                const position = [data.latitude, data.longitude];
+                const position = [
+                    data.latitude,
+                    data.longitude
+                ];
 
                 document.getElementById("latitude").textContent =
                     data.latitude.toFixed(6);
@@ -245,42 +251,59 @@
                 document.getElementById("longitude").textContent =
                     data.longitude.toFixed(6);
 
-                document.getElementById("updated").textContent =
-                    new Date().toLocaleTimeString();
+                if (data.updated_at !== null) {
+                    document.getElementById("updated").textContent =
+                        new Date(data.updated_at * 1000).toLocaleTimeString();
+                }
 
-                status.textContent = "GPS Connected";
-                status.className = "status online";
+                if (data.is_online) {
+                    setStatus("GPS Connected", "online");
+                } else {
+                    setStatus("GPS Disconnected", "offline");
+                }
 
-                marker.setLatLng(position);
-                marker.setPopupContent(
-                    `Bus location<br>
-                     Latitude: ${data.latitude.toFixed(6)}<br>
-                     Longitude: ${data.longitude.toFixed(6)}`
-                );
+                if (!marker) {
+                    marker = L.circleMarker(position, {
+                        radius: 9,
+                        color: "#ffffff",
+                        weight: 3,
+                        fillColor: "#168653",
+                        fillOpacity: 1
+                    }).addTo(map);
 
-                // Center on the first received location.
-                // Follow subsequent movement only when the bus moves.
-                const moved = !lastCoordinates ||
-                    map.distance(lastCoordinates, position) > 10;
+                    marker.bindPopup("GPS Tracker Location");
 
-                if (!lastCoordinates) {
                     map.setView(position, 16);
-                } else if (moved) {
-                    map.panTo(position);
+
+                } else {
+                    marker.setLatLng(position);
+
+                    marker.setPopupContent(
+                        "GPS Tracker Location<br>" +
+                        "Latitude: " + data.latitude.toFixed(6) + "<br>" +
+                        "Longitude: " + data.longitude.toFixed(6)
+                    );
+
+                    const moved = !lastCoordinates ||
+                        map.distance(lastCoordinates, position) > 10;
+
+                    if (moved) {
+                        map.panTo(position);
+                    }
                 }
 
                 lastCoordinates = position;
 
             } catch (error) {
-                status.textContent = "Server disconnected";
-                status.className = "status";
+                setStatus("Server Disconnected", "error");
                 console.error("Location update failed:", error);
             }
         }
 
         updateLocation();
         setInterval(updateLocation, 2000);
-    </script>
-</body>
 
+    </script>
+
+</body>
 </html>
