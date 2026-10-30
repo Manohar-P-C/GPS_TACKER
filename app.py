@@ -77,5 +77,34 @@ def health():
     return jsonify({"status": "ok"})
 
 
+@app.route("/manifest.webmanifest")
+def manifest():
+    response = send_from_directory(
+        ".",
+        "manifest.webmanifest",
+        mimetype="application/manifest+json"
+    )
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.route("/sw.js")
+def service_worker():
+    response = send_from_directory(
+        ".",
+        "sw.js",
+        mimetype="application/javascript"
+    )
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.route("/icons/<path:filename>")
+def app_icons(filename):
+    return send_from_directory("icons", filename)
+
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>GPS_TRACKER | Live GPS Location</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+
+    <meta name="theme-color" content="#faf6eb">
+
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <meta name="apple-mobile-web-app-title" content="GPS_TRACKER">
+
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -572,6 +585,21 @@
                 padding-top: 8px;
             }
         }
+
+        #installButton {
+            padding: 10px 16px;
+            border: 2px solid #b6cdb1;
+            border-radius: 12px;
+            background: #e8efe1;
+            color: #347449;
+            font-family: "Nunito", sans-serif;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        #installButton[hidden] {
+            display: none;
+        }
     </style>
 </head>
 
@@ -605,6 +633,10 @@
             </div>
 
         </header>
+
+        <button id="installButton" hidden>
+            Install GPS_TRACKER
+        </button>
 
 
         <section class="info-grid">
@@ -878,6 +910,57 @@
         // Refresh GPS information every 2 seconds
         setInterval(updateLocation, 2000);
 
+
+    </script>
+
+    // PWA SCRIPT
+    <script>
+
+        // Register GPS_TRACKER service worker
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", async () => {
+                try {
+                    await navigator.serviceWorker.register("/sw.js");
+                    console.log("GPS_TRACKER service worker registered");
+                } catch (error) {
+                    console.error("Service worker registration failed:", error);
+                }
+            });
+        }
+
+        // Handle Chrome installation prompt
+        let deferredInstallPrompt = null;
+
+        const installButton = document.getElementById("installButton");
+
+        window.addEventListener("beforeinstallprompt", event => {
+            event.preventDefault();
+
+            deferredInstallPrompt = event;
+            installButton.hidden = false;
+        });
+
+        // Install GPS_TRACKER
+        installButton.addEventListener("click", async () => {
+            if (!deferredInstallPrompt) return;
+
+            deferredInstallPrompt.prompt();
+
+            const result = await deferredInstallPrompt.userChoice;
+
+            console.log("Installation result:", result.outcome);
+
+            deferredInstallPrompt = null;
+            installButton.hidden = true;
+        });
+
+        // Detect successful installation
+        window.addEventListener("appinstalled", () => {
+            installButton.hidden = true;
+            deferredInstallPrompt = null;
+
+            console.log("GPS_TRACKER installed successfully");
+        });
 
     </script>
 
