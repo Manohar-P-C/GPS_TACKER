@@ -6,6 +6,12 @@ from flask import Flask, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+FRONTEND_DIR = os.path.abspath(
+    os.path.join(BASE_DIR, "..", "frontend")
+)
+
 GPS_API_KEY = os.environ.get("GPS_API_KEY", "")
 GPS_TIMEOUT = 15
 
@@ -15,10 +21,9 @@ latest_location = {
     "updated_at": None
 }
 
-
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(FRONTEND_DIR, "index.html")
 
 
 @app.route("/gps", methods=["POST"])
@@ -80,7 +85,7 @@ def health():
 @app.route("/manifest.webmanifest")
 def manifest():
     response = send_from_directory(
-        ".",
+        FRONTEND_DIR,
         "manifest.webmanifest",
         mimetype="application/manifest+json"
     )
@@ -91,7 +96,7 @@ def manifest():
 @app.route("/sw.js")
 def service_worker():
     response = send_from_directory(
-        ".",
+        FRONTEND_DIR,
         "sw.js",
         mimetype="application/javascript"
     )
@@ -102,7 +107,10 @@ def service_worker():
 
 @app.route("/icons/<path:filename>")
 def app_icons(filename):
-    return send_from_directory("icons", filename)
+    return send_from_directory(
+        os.path.join(FRONTEND_DIR, "icons"),
+        filename
+    )
 
 
 
