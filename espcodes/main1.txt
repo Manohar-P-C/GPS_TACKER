@@ -1,19 +1,17 @@
 ESP32 main.py code which gets connect to same hotspot both in controller and laptop
 
 
+
 import network
 import time
 import json
-import socket
+import urequests
 from machine import UART, Pin
+import config
 
-# ---------- WIFI SETTINGS ----------
-WIFI_SSID = "Not"
-WIFI_PASSWORD = "120120120"
-
-# ---------- LAPTOP SERVER ----------
-SERVER_IP = "10.209.79.38"
-SERVER_PORT = 8000
+# ---------- RENDER SERVER ----------
+SERVER_URL = config.SERVER_URL.rstrip("/")
+GPS_API_KEY = config.GPS_API_KEY
 
 # ---------- GPS UART ----------
 gps = UART(
@@ -32,8 +30,8 @@ def connect_wifi():
         print("Wi-Fi connected:", wlan.ifconfig()[0])
         return wlan
 
-    print("Connecting to hotspot...")
-    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    print("Connecting to Wi-Fi...")
+    wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
 
     for _ in range(30):
         if wlan.isconnected():
@@ -61,66 +59,58 @@ def to_decimal(value, direction):
 
 
 def send_location(latitude, longitude):
-    payload = json.dumps({
+    url = SERVER_URL + "/gps"
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-API-Key": GPS_API_KEY
+    }
+
+    payload = {
         "latitude": latitude,
         "longitude": longitude
-    })
+    }
 
-    request = (
-        "POST /gps HTTP/1.1\r\n"
-        "Host: {}:{}\r\n"
-        "Content-Type: application/json\r\n"
-        "Content-Length: {}\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "{}"
-    ).format(
-        SERVER_IP,
-        SERVER_PORT,
-        len(payload),
-        payload
-    )
-
-    sock = None
+    response = None
 
     try:
-        address = socket.getaddrinfo(
-            SERVER_IP, SERVER_PORT
-        )[0][-1]
+        response = urequests.post(
+            url,
+            data=json.dumps(payload),
+            headers=headers
+        )
 
-        sock = socket.socket()
-        sock.settimeout(4)
-        sock.connect(address)
-        sock.send(request.encode())
-
-        response = sock.recv(256).decode("utf-8", "ignore")
-
-        if "200 OK" in response:
+        if response.status_code == 200:
             print("Location sent successfully!")
-            print(latitude, longitude)
-        else:
-            print("Server response:", response[:120])
+            print("Latitude:", latitude)
+            print("Longitude:", longitude)
+            return True
+
+        print("Server HTTP status:", response.status_code)
+        return False
 
     except Exception as error:
         print("Send failed:", error)
+        return False
 
     finally:
-        if sock:
-            sock.close()
+        if response is not None:
+            response.close()
 
 
 wlan = connect_wifi()
 last_sent = 0
 
-print("GPS-to-laptop transmitter started.")
+print("GPS-to-Render transmitter started.")
 
 while True:
+
     # Reconnect if Wi-Fi disconnects
     if not wlan.isconnected():
         print("Wi-Fi disconnected. Reconnecting...")
         wlan = connect_wifi()
 
-    if gps.any():
+    if wlan.isconnected() and gps.any():
         line = gps.readline()
 
         if line:
@@ -133,15 +123,21 @@ while True:
                     fix_quality = int(fields[6] or "0")
 
                     if fix_quality > 0 and fields[2] and fields[4]:
+
                         latitude = to_decimal(fields[2], fields[3])
                         longitude = to_decimal(fields[4], fields[5])
 
                         now = time.time()
 
                         # Send at most once every 2 seconds
-                        if now - last_sent >= 2 and wlan.isconnected():
-                            send_location(latitude, longitude)
-                            last_sent = now
+                        if now - last_sent >= 2:
+                            success = send_location(
+                                latitude,
+                                longitude
+                            )
+
+                            if success:
+                                last_sent = now
 
                 except (ValueError, IndexError):
                     pass
